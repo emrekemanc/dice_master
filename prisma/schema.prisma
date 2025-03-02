@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+model User {
+  id            String     @id @default(uuid())
+  firstName     String
+  lastName      String
+  userName      String     @unique
+  mail          String     @unique
+  msisdn        String?    @unique
+  userRank      Int        @default(0)
+  userXp        Int        @default(0)
+  userRole      UserRole   @default(USER)
+  userStatus    UserStatus @default(ACTIVE)
+  avatarsId     String?
+  userBirthDate DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?
+  lastActive    DateTime?
+  Token         Token?
+  Password      Password?
+}
+
+model Token {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  token        String    @unique
+  refreshToken String    @unique
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Password {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  hashPassword   String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  lastPasswordId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Avatar {
+  id   String @id @default(uuid())
+  name String
+  url  String @unique
+}
