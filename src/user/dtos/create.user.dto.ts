@@ -2,7 +2,7 @@ import { IsString, IsOptional, IsEmail, IsInt, IsUUID, IsEnum, IsDate } from 'cl
 import { UserRole, UserStatus } from '@prisma/client';
 import { PartialType } from '@nestjs/mapped-types';
 
-export class UserDto {
+export class CreateUserDto {
   @IsUUID()
   @IsOptional()
   id?: string;
@@ -64,4 +64,3 @@ export class UserDto {
   lastActive?: Date;
 }
 
-export class UpdateUserDto extends PartialType(UserDto) {}
