@@ -5,22 +5,26 @@ import { GetUserDto } from 'src/user/dtos/get.user.dto';
 import { PasswordService } from './password/password.service';
 import { CreatePasswordDto } from './password/dtos/create.password.dto';
 import { CreateUserDto } from 'src/user/dtos/create.user.dto';
-import { RegisterDto } from './dtos/auth.dto';
+import { RegisterDto } from './dtos/register.auth.dto';
+import { LoginDto } from './dtos/login.auth.dto';
+
 
 
 @Injectable()
 export class AuthService {
     constructor(private userService: UserService, private tokenService: TokenService,private passwordService: PasswordService){}
-    async validateUser(mail: string, password: string): Promise<GetUserDto>{
+    
+    async loginUser(loginDto: LoginDto): Promise<GetUserDto>{
         try{
-            const userId = await this.userService.getUserIdWhitMail(mail);
+            const userId = await this.userService.getUserIdWhitMail(loginDto.mail);
             if(!userId){
                 throw new  BadRequestException('User not found');
             }
-            const isMatchd = this.passwordService.comparePassword(password,userId);
-            if(!isMatchd){
+            const isMatchd = this.passwordService.comparePassword(loginDto.password,userId);
+            if(await isMatchd == false){
                 throw new BadRequestException('Password does not match');
             }
+            const payload = {}
             return await this.userService.getUserWhitId(userId);
         }catch(e){
             throw new Error(e);
@@ -54,7 +58,7 @@ export class AuthService {
         }catch(e){
             throw new Error(e)
         }
-
-
     }
+    
+   
 }

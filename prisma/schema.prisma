@@ -13,18 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  BANNED
-}
-
-enum UserRole {
-  USER
-  MODERATOR
-  ADMIN
-}
-
 model User {
   id            String     @id @default(uuid())
   firstName     String
@@ -48,7 +36,7 @@ model User {
 
 model Token {
   id           String    @id @default(uuid())
-  userId       String    @unique
+  userId       String    
   token        String    @unique
   refreshToken String    @unique
   createdAt    DateTime  @default(now())
@@ -74,4 +62,15 @@ model Avatar {
   id   String @id @default(uuid())
   name String
   url  String @unique
+}
+enum UserRole {
+  ADMIN
+  USER
+  MODERATOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
 }

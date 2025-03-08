@@ -1,8 +1,8 @@
 -- CreateEnum
-CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'BANNED');
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'USER', 'MODERATOR');
 
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('USER', 'MODERATOR', 'ADMIN');
+CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'BANNED');
 
 -- CreateTable
 CREATE TABLE "User" (
