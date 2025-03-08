@@ -1,6 +1,5 @@
 import { IsString, IsOptional, IsEmail, IsInt, IsUUID, IsEnum, IsDate } from 'class-validator';
 import { UserRole, UserStatus } from '@prisma/client';
-import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateUserDto {
   @IsUUID()
