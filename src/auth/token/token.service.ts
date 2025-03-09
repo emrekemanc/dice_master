@@ -3,6 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PayloadDto } from './dto/payload.token.dto';
 import { CreateTokenDto } from './dto/create.token.dto';
+import { GetUserDto } from 'src/user/dtos/get.user.dto';
 @Injectable()
 export class TokenService {
     private readonly jwtSecret = process.env.JWT_SECRET;
@@ -40,12 +41,21 @@ export class TokenService {
         }
 
     }
-    async saveTokens(createTokenDto: CreateTokenDto){
-        try{    
-            const token = await this.prismaService.token.create({
-                data: createTokenDto
+    async saveTokens(user: GetUserDto){
+        try{ 
+            const userId = user.id;
+            const userRole = user.userRole;
+            const mail = user.mail;
+            const payload: PayloadDto = {userId: userId, userRole: userRole, mail: mail}
+            const token = this.createToken(payload)
+            const refreshToken = this.createRefreshToken()
+            const tokens = await this.prismaService.token.create({
+                data: {userId: user.id,
+                       token: token,
+                       refreshToken: refreshToken
+                }
             });
-            if(!token){
+            if(!tokens){
                 throw new Error("Token Not Saved")
             }
             return true

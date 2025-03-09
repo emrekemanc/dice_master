@@ -24,8 +24,12 @@ export class AuthService {
             if(await isMatchd == false){
                 throw new BadRequestException('Password does not match');
             }
-            const payload = {}
-            return await this.userService.getUserWhitId(userId);
+            const user = await this.userService.getUserWhitId(userId);
+            const saveToken = await this.tokenService.saveTokens(user);
+            if(!saveToken == true){
+                throw new BadRequestException("Tokens could not be registered");
+            }
+            return user;
         }catch(e){
             throw new Error(e);
         }
@@ -45,18 +49,23 @@ export class AuthService {
             }
             const userId = await this.userService.createUser(createUserDto);
             const hashPassword = await this.passwordService.hashPassword(registerDto.password);
-            if(!userId || ! hashPassword){
+            if(!userId || !hashPassword){
                 throw new BadRequestException("creating error user or password ");
             }
-            const passwordDto: CreatePasswordDto = {userId,hashPassword}
+            const passwordDto: CreatePasswordDto = {userId,hashPassword};
             const createPassword = await this.passwordService.addPassword(passwordDto);
             if(createPassword == false){
                 await this.userService.deletedUser(userId);
-                throw new BadRequestException("password error")
+                throw new BadRequestException("password error");
             }
-            return "creat user"
+            const user = await this.userService.getUserWhitId(userId);
+            const saveToken = await this.tokenService.saveTokens(user);
+            if(!saveToken == true){
+                throw new BadRequestException("Tokens could not be registered");
+            }
+            return "create user";
         }catch(e){
-            throw new Error(e)
+            throw new Error(e);
         }
     }
     

@@ -30,7 +30,7 @@ model User {
   updatedAt     DateTime   @updatedAt
   deletedAt     DateTime?
   lastActive    DateTime?
-  Token         Token?
+  Token         Token[]
   Password      Password?
 }
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dtos/create.user.dto';
 import { use } from 'passport';
@@ -39,7 +39,7 @@ export class UserService {
                 where: {id:userId}
             }) as GetUserDto;
             if(!user){
-                throw new Error('User Not Found');
+                throw new NotFoundException('User Not Found');
             }
             return user
         }catch(e){
@@ -54,13 +54,43 @@ export class UserService {
     }) as GetUserDto;
 
     if(!user){
-        throw new Error("User Not Found");
+        throw new NotFoundException("User Not Found");
 
     }
     return user.id;
 
     }catch(e){console.log(e)}
         
+    }
+    async getUserRoleWithUserId(userId: string){
+        try{
+            const userRole = await this.prismaService.user.findUnique({
+                where: {id: userId},
+                select: {userRole: true}
+            });
+            if(!userRole){
+                throw new NotFoundException("Failed to Capture Data")
+            };
+            return userRole;
+
+        }catch(e){
+        
+        }
+    }
+    async getMailWithUserId(userId: string){
+        try{
+            const mail = await this.prismaService.user.findUnique({
+                where: {id: userId},
+                select: {mail: true}
+            }) ;
+            if(!mail){
+                throw new NotFoundException("Failed to Capture Data")
+            };
+            return mail;
+
+        }catch(e){
+        
+        }
     }
 
 }
