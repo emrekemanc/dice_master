@@ -1,66 +1,74 @@
-import { Injectable } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PayloadDto } from './dto/payload.token.dto';
-import { CreateTokenDto } from './dto/create.token.dto';
-import { GetUserDto } from 'src/user/dtos/get.user.dto';
+import { JwtService } from '@nestjs/jwt';
+import { promises } from 'dns';
+import { GetTokenDto } from './dto/get.token.dto';
 @Injectable()
 export class TokenService {
     private readonly jwtSecret = process.env.JWT_SECRET;
-    constructor(protected prismaService: PrismaService){}
+    constructor(protected prismaService: PrismaService, protected jwtService: JwtService){}
     
-    createToken(payloadDto: PayloadDto){
-    try{
-        if(!payloadDto ){
-        throw new Error('Payload is not defined!');
+    async createToken(userId: string,userRole: string): Promise<string>
+    {
+        try{
+            const token = this.jwtService.sign({ userId: userId, userRole: userRole });
+            if(!token) throw new InternalServerErrorException('An Error Occurred During Token Generation');
+            return token;
+        }catch(e){
+            throw new InternalServerErrorException(e);
         }
-        if (!this.jwtSecret) {
-        throw new Error('JWT_SECRET is not defined!');
-      }
-        const userId = payloadDto.userId
-        const userRole = payloadDto.userRole
-        const mail = payloadDto.mail
-        const payload = {userId,userRole,mail}
-        return jwt.sign(payload, this.jwtSecret,{ expiresIn: '1h' });
-        }
-    catch(e){
-        throw new Error(e);
+    }
+
+    async createRefreshToken(userId: string,userRole: string): Promise<string>{
+        try{
+            const refreshToken = this.jwtService.sign({userId: userId, userRole: userRole },{expiresIn: '7d'});
+            if(!refreshToken) throw new InternalServerErrorException('An Error Occurred During Token Generation');
+            return refreshToken;
+        }catch(e){
+            throw new InternalServerErrorException(e);
         }
         
     }
-
-    createRefreshToken(){
+    async savedTokens(token: string,refreshToken: string, userId: string){
         try{
-            if (!this.jwtSecret) {
-                throw new Error('JWT_SECRET is not defined!');
-              }
-            return jwt.sign({}, this.jwtSecret, { expiresIn: '7d' });
-        }
-        catch(e){
-            throw new Error(e);
-        }
-
-    }
-    async saveTokens(user: GetUserDto){
-        try{ 
-            const userId = user.id;
-            const userRole = user.userRole;
-            const mail = user.mail;
-            const payload: PayloadDto = {userId: userId, userRole: userRole, mail: mail}
-            const token = this.createToken(payload)
-            const refreshToken = this.createRefreshToken()
-            const tokens = await this.prismaService.token.create({
-                data: {userId: user.id,
-                       token: token,
-                       refreshToken: refreshToken
+            return this.prismaService.token.create({
+                data: {userId: userId,
+                        token: token,
+                        refreshToken: refreshToken
                 }
             });
-            if(!tokens){
-                throw new Error("Token Not Saved")
-            }
-            return true
         }catch(e){
-            throw new Error(e);
+            throw new InternalServerErrorException(e);
         }
     }
+
+    async generateToken(userId: string, userRole: string){
+        const token = await this.createToken(userId,userRole);
+        const refreshToken = await this.createRefreshToken(userId,userRole);
+        await this.savedTokens(token,refreshToken,userId);
+        return {token,refreshToken};
+    }
+    
+    async refreshToken(refreshToken: string){
+       try{ 
+        const decoded = await this.validateRefreshToken(refreshToken);
+        if(!decoded) throw new InternalServerErrorException('Dont Decoded Token');
+        return await this.generateToken(decoded.userId,decoded.userRole);
+       }catch(e){
+        throw new InternalServerErrorException(e);
+       }
+
+    }
+
+    async validateRefreshToken(refreshToken: string){
+       try{ const tokenData = await this.prismaService.token.findUnique({
+            where: {refreshToken: refreshToken}
+        }) as GetTokenDto;
+        if(!tokenData) throw new InternalServerErrorException('Dont Found Token');
+
+        return await this.jwtService.verify(tokenData.refreshToken);}catch(e){
+           throw new InternalServerErrorException(e);
+        }
+    }
+
 }
