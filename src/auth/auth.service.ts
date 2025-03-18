@@ -14,7 +14,7 @@ import { LoginDto } from './dtos/login.auth.dto';
 export class AuthService {
     constructor(private userService: UserService, private tokenService: TokenService,private passwordService: PasswordService){}
     
-    async loginUser(loginDto: LoginDto): Promise<GetUserDto>{
+    async loginUser(loginDto: LoginDto){
         try{
             const userId = await this.userService.getUserIdWhitMail(loginDto.mail);
             if(!userId){
@@ -25,14 +25,18 @@ export class AuthService {
                 throw new BadRequestException('Password does not match');
             }
             const user = await this.userService.getUserWhitId(userId);
-            const saveToken = await this.tokenService.saveTokens(user);
-            if(!saveToken == true){
+            const tokens = this.tokenService.generateToken(user.id,user.userRole);
+            if(!tokens){
                 throw new BadRequestException("Tokens could not be registered");
             }
-            return user;
+            return tokens;
         }catch(e){
             throw new Error(e);
         }
+
+    }
+    async logout(tokenId: string){
+        return await this.tokenService.deleteToken(tokenId);
 
     }
     async registerUser(registerDto: RegisterDto){
@@ -59,8 +63,8 @@ export class AuthService {
                 throw new BadRequestException("password error");
             }
             const user = await this.userService.getUserWhitId(userId);
-            const saveToken = await this.tokenService.saveTokens(user);
-            if(!saveToken == true){
+            const tokens = this.tokenService.generateToken(user.id,user.userRole);
+            if(!tokens){
                 throw new BadRequestException("Tokens could not be registered");
             }
             return "create user";

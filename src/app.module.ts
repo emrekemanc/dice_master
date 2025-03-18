@@ -7,6 +7,7 @@ import { TokenModule } from './auth/token/token.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 
+
 @Module({
   imports: [UserModule, PasswordModule, TokenModule, PrismaModule, AuthModule],
   controllers: [AppController],
