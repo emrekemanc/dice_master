@@ -1,4 +1,4 @@
-import { IsString,IsUUID,IsOptional, IsNotEmpty, IsDate, IsEnum, IsEmail } from 'class-validator';
+import { IsUUID,IsNotEmpty, IsEnum } from 'class-validator';
 import { UserRole } from '@prisma/client';
 export class PayloadDto{
     @IsUUID()
@@ -8,8 +8,4 @@ export class PayloadDto{
     @IsEnum(UserRole)
     @IsNotEmpty()
     userRole: UserRole;
-
-    @IsEmail()
-    @IsNotEmpty()
-    mail: string;
 }

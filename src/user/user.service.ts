@@ -1,23 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dtos/create.user.dto';
 import { GetUserDto } from './dtos/get.user.dto';
+import { UserRole } from '@prisma/client';
+
 
 
 @Injectable()
 export class UserService {
     constructor(protected prismaService: PrismaService){}
 
-    async createUser(userDto: CreateUserDto){
+    async createUser(userDto: CreateUserDto): Promise<GetUserDto>{
         try{
             
             const user = await this.prismaService.user.create({
                 data: userDto
-            });
-            
-            return user.id;
+            }) as GetUserDto;
+            if(!user) throw new InternalServerErrorException('User Dont Created');
+            return user;
         }catch(e){
-            console.log(e)
+            throw new InternalServerErrorException('User Dont Created');
         }
 
     }
@@ -42,11 +44,11 @@ export class UserService {
             }
             return user
         }catch(e){
-            throw new Error(e)
+            throw new NotFoundException('User Not Found');
         }
 
     }
-    async getUserIdWhitMail(mail: string){
+    async getUserWhitMail(mail: string): Promise<GetUserDto>{
     try{
             const user: GetUserDto = await this.prismaService.user.findUnique({
         where: {mail: mail}
@@ -56,12 +58,14 @@ export class UserService {
         throw new NotFoundException("User Not Found");
 
     }
-    return user.id;
+    return user;
 
-    }catch(e){console.log(e)}
+    }catch(e){
+        throw new NotFoundException("User Not Found");
+    }
         
     }
-    async getUserRoleWithUserId(userId: string){
+    async getUserRoleWithUserId(userId: string): Promise<UserRole>{
         try{
             const userRole = await this.prismaService.user.findUnique({
                 where: {id: userId},
@@ -70,13 +74,13 @@ export class UserService {
             if(!userRole){
                 throw new NotFoundException("Failed to Capture Data")
             };
-            return userRole;
+            return userRole.userRole;
 
         }catch(e){
-        
+            throw new NotFoundException("Failed to Capture Data")
         }
     }
-    async getMailWithUserId(userId: string){
+    async getMailWithUserId(userId: string): Promise<string>{
         try{
             const mail = await this.prismaService.user.findUnique({
                 where: {id: userId},
@@ -85,10 +89,10 @@ export class UserService {
             if(!mail){
                 throw new NotFoundException("Failed to Capture Data")
             };
-            return mail;
+            return mail.mail;
 
         }catch(e){
-        
+            throw new NotFoundException("Failed to Capture Data")
         }
     }
 
