@@ -3,6 +3,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dtos/create.user.dto';
 import { GetUserDto } from './dtos/get.user.dto';
 import { UserRole } from '@prisma/client';
+import { UserExceptions } from 'src/exceptions/user.exceptions';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+
 
 
 
@@ -12,25 +15,24 @@ export class UserService {
 
     async createUser(userDto: CreateUserDto): Promise<GetUserDto>{
         try{
-            
             const user = await this.prismaService.user.create({
                 data: userDto
             }) as GetUserDto;
-            if(!user) throw new InternalServerErrorException('User Dont Created');
+            if(!user) throw UserExceptions.ServerCausedError();
             return user;
         }catch(e){
-            throw new InternalServerErrorException('User Dont Created');
+           throw e;
         }
-
     }
+
     async deletedUser(userId: string): Promise<boolean>{
         try{
             await this.prismaService.user.delete({
                 where: {id: userId}
             });
-            return true
+            return true;
         }catch(e){
-            return false
+            throw e;
         }
     }
     
@@ -40,11 +42,11 @@ export class UserService {
                 where: {id:userId}
             }) as GetUserDto;
             if(!user){
-                throw new NotFoundException('User Not Found');
+                throw UserExceptions.UserNotFound(userId);
             }
             return user
         }catch(e){
-            throw new NotFoundException('User Not Found');
+            throw e
         }
 
     }
@@ -53,17 +55,14 @@ export class UserService {
             const user: GetUserDto = await this.prismaService.user.findUnique({
         where: {mail: mail}
     }) as GetUserDto;
-
     if(!user){
-        throw new NotFoundException("User Not Found");
-
+        throw UserExceptions.UserNotFound(mail);
     }
     return user;
-
     }catch(e){
-        throw new NotFoundException("User Not Found");
+        throw e
     }
-        
+
     }
     async getUserRoleWithUserId(userId: string): Promise<UserRole>{
         try{
@@ -72,12 +71,11 @@ export class UserService {
                 select: {userRole: true}
             });
             if(!userRole){
-                throw new NotFoundException("Failed to Capture Data")
+                throw UserExceptions.UserNotFound(userId)
             };
             return userRole.userRole;
-
         }catch(e){
-            throw new NotFoundException("Failed to Capture Data")
+            throw e
         }
     }
     async getMailWithUserId(userId: string): Promise<string>{
@@ -87,13 +85,35 @@ export class UserService {
                 select: {mail: true}
             }) ;
             if(!mail){
-                throw new NotFoundException("Failed to Capture Data")
+                throw UserExceptions.UserNotFound(userId)
             };
             return mail.mail;
 
         }catch(e){
-            throw new NotFoundException("Failed to Capture Data")
+            throw e;
         }
+    }
+    async userValidation(createUserDto: CreateUserDto){
+        const mail = await this.prismaService.user.findUnique({
+            where: {mail: createUserDto.mail}
+        });
+        if(mail){
+            throw UserExceptions.UserAlreadyExists(createUserDto.mail);
+        }
+        const userName = await this.prismaService.user.findUnique({
+            where: {userName: createUserDto.userName}
+        });
+        if(userName){
+            throw UserExceptions.UserAlreadyExists(createUserDto.userName);
+        }
+        const msisdn  = await this.prismaService.user.findUnique({
+            where: {msisdn: createUserDto.msisdn}
+        });
+        if(msisdn){
+            throw UserExceptions.UserAlreadyExists(createUserDto.msisdn!);
+        }
+        return true;
+    
     }
 
 }

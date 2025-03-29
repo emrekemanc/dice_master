@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { UserService } from 'src/user/user.service';
-import { TokenService } from './token/token.service';
-import { PasswordService } from './password/password.service';
-import { CreateUserDto } from 'src/user/dtos/create.user.dto';
+import { UserService } from 'src/modules/user/user.service';
+import { TokenService } from '../token/token.service';
+import { PasswordService } from '../password/password.service';
 import { RegisterDto } from './dtos/register.auth.dto';
 import { LoginDto } from './dtos/login.auth.dto';
-import { ResultTokenDto } from './token/dto/result.token.dto';
+import { ResultTokenDto } from '../token/dto/result.token.dto';
 
 
 
@@ -34,7 +33,7 @@ export class AuthService {
 
     async registerUser(registerDto: RegisterDto): Promise<ResultTokenDto>{
         try{   
-            const createUserDto: CreateUserDto = registerDto
+            const {password ,...createUserDto} = registerDto
             const user = await this.userService.createUser(createUserDto);
             
             const hashPassword = await this.passwordService.hashPassword(registerDto.password);
@@ -50,7 +49,7 @@ export class AuthService {
             }
             return tokens;
         }catch(e){
-            throw new Error(e);
+            throw e;
         }
     }
     

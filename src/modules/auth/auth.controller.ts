@@ -15,5 +15,6 @@ constructor(protected authService: AuthService){}
     async loginUser(@Body() loginDto: LoginDto){
         return this.authService.loginUser(loginDto)
     }
+
     
 }

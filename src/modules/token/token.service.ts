@@ -1,11 +1,12 @@
-import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Catch, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { GetTokenDto } from './dto/get.token.dto';
 import { PayloadDto } from './dto/payload.dto';
 import { CreateTokenDto } from './dto/create.token.dto';
-import { error } from 'console';
 import { ResultTokenDto } from './dto/result.token.dto';
+import { RefreshTokenDto } from './dto/refresh.token.dto';
+
 @Injectable()
 export class TokenService {
     constructor(protected prismaService: PrismaService, protected jwtService: JwtService){}
@@ -16,7 +17,7 @@ export class TokenService {
             if(!token) throw new InternalServerErrorException('An Error Occurred During Token Generation');
             return token;
         }catch(e){
-            throw new InternalServerErrorException('An Error Occurred During Token Generation');
+            throw e
         }
     }
 
@@ -55,6 +56,7 @@ export class TokenService {
     }
 
     async generateToken(payloadDto: PayloadDto): Promise<ResultTokenDto>{
+      try { 
         const token: string = await this.createToken(payloadDto);
         const refreshToken: string = await this.createRefreshToken(payloadDto);
         const foundToken: [GetTokenDto] = await this.foundToken(payloadDto.userId);
@@ -63,18 +65,20 @@ export class TokenService {
         })
         const tokens = await this.savedTokens({userId:payloadDto.userId ,token: token ,refreshToken: refreshToken});
         return tokens;
-    }
+     }catch(e){
+        throw e;
+        }
+        }
     
-    async refreshToken(tokenId: string, refreshToken: string): Promise<ResultTokenDto>{
+    async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<ResultTokenDto>{
        try{
-        const decoded: PayloadDto = await this.validateRefreshToken(refreshToken);
+        const decoded: PayloadDto = await this.validateRefreshToken(refreshTokenDto.refreshToken);
         if(!decoded) throw new InternalServerErrorException('Dont Decoded Token');
-        await this.deleteToken(tokenId);
-        const newTokens: ResultTokenDto =  await this.generateToken(decoded);
+        const newTokens: ResultTokenDto =  await this.generateToken({userId: decoded.userId,userRole: decoded.userRole})
         if(!newTokens) throw new InternalServerErrorException('An Error Occurred During Token Generation');
         return newTokens;
        }catch(e){
-        throw new InternalServerErrorException(e);
+        throw e;
        }
 
     }
@@ -83,13 +87,13 @@ export class TokenService {
        try{ const tokenData: GetTokenDto = await this.prismaService.token.findUnique({
             where: {refreshToken: refreshToken}
         }) as GetTokenDto;
-
         if(!tokenData) throw new InternalServerErrorException('Dont Found Token');
+        if(tokenData.deletedAt) throw new BadRequestException('Token Not Active')
             const data: PayloadDto = await this.jwtService.verify(tokenData.refreshToken);
         return data;
 
     }catch(e){
-           throw new InternalServerErrorException(e);
+           throw e;
         }
     }
 

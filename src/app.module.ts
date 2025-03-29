@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './user/user.module';
-import { PasswordModule } from './auth/password/password.module';
-import { TokenModule } from './auth/token/token.module';
+import { UserModule } from './modules/user/user.module';
+import { PasswordModule } from './modules/password/password.module';
+import { TokenModule } from './modules/token/token.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './modules/auth/auth.module';
+
 
 
 @Module({
