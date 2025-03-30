@@ -18,7 +18,7 @@ export class UserService {
             const user = await this.prismaService.user.create({
                 data: userDto
             }) as GetUserDto;
-            if(!user) throw UserExceptions.ServerCausedError();
+            //if(!user) throw UserExceptions.ServerCausedError();
             return user;
         }catch(e){
            throw e;
