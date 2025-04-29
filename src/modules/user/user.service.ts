@@ -38,8 +38,9 @@ export class UserService {
     
     async getUserWhitId(userId: string): Promise<GetUserDto>{
         try{
+            
             const user: GetUserDto = await this.prismaService.user.findUnique({
-                where: {id:userId}
+                where: {id: userId}
             }) as GetUserDto;
             if(!user){
                 throw UserExceptions.UserNotFound(userId);

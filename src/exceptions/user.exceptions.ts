@@ -1,5 +1,4 @@
 import { HttpException,HttpStatus } from "@nestjs/common";
-import { NotFoundError } from "rxjs";
 
 export class UserExceptions{
     static UserNotFound(searchData: string): HttpException{
