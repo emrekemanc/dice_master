@@ -3,7 +3,7 @@ import { UserRole } from '@prisma/client';
 export class PayloadDto{
     @IsUUID()
     @IsNotEmpty()
-    userId: string;
+    sub: string;
 
     @IsEnum(UserRole)
     @IsNotEmpty()

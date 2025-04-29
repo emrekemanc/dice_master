@@ -11,9 +11,7 @@ import { TokenController } from './token.controller';
     PrismaModule,
     JwtModule.register({
         global: true,
-        secret: process.env.JWT_SECRET,
-        signOptions: { expiresIn: '1d' },
-     
+        secret: process.env.JWT_SECRET
     }),
   ],
   providers: [TokenService, PrismaService],

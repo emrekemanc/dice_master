@@ -18,7 +18,7 @@ export class UserService {
             const user = await this.prismaService.user.create({
                 data: userDto
             }) as GetUserDto;
-            if(!user) throw UserExceptions.ServerCausedError();
+            //if(!user) throw UserExceptions.ServerCausedError();
             return user;
         }catch(e){
            throw e;
@@ -38,8 +38,9 @@ export class UserService {
     
     async getUserWhitId(userId: string): Promise<GetUserDto>{
         try{
+            
             const user: GetUserDto = await this.prismaService.user.findUnique({
-                where: {id:userId}
+                where: {id: userId}
             }) as GetUserDto;
             if(!user){
                 throw UserExceptions.UserNotFound(userId);

@@ -18,11 +18,11 @@ export class AuthService {
             if(!user) throw new  BadRequestException('User not found');
             const isMatchd = this.passwordService.comparePassword(loginDto.password, user.id);
             if(await isMatchd == false) throw new BadRequestException('Password does not match');
-            const tokens = this.tokenService.generateToken({userId: user.id,userRole: user.userRole});
+            const tokens = this.tokenService.generateToken({sub: user.id,userRole: user.userRole});
             if(!tokens) throw new BadRequestException("Tokens could not be registered");
             return tokens;
         }catch(e){
-            throw new BadRequestException('User Not Login');
+            throw e
         }
 
     }
@@ -43,7 +43,7 @@ export class AuthService {
                 await this.userService.deletedUser(user.id);
                 throw new BadRequestException("password error");
             }
-            const tokens = this.tokenService.generateToken({userId: user.id, userRole: user.userRole});
+            const tokens = this.tokenService.generateToken({sub: user.id, userRole: user.userRole});
             if(!tokens){
                 throw new BadRequestException("Tokens could not be registered");
             }

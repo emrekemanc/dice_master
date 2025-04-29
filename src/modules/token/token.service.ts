@@ -13,7 +13,7 @@ export class TokenService {
     async createToken(payloadDto: PayloadDto): Promise<string>
     {
         try{
-            const token: string = this.jwtService.sign(payloadDto);
+            const token: string = this.jwtService.sign(payloadDto, {expiresIn: '1h'});
             if(!token) throw new InternalServerErrorException('An Error Occurred During Token Generation');
             return token;
         }catch(e){
@@ -59,11 +59,11 @@ export class TokenService {
       try { 
         const token: string = await this.createToken(payloadDto);
         const refreshToken: string = await this.createRefreshToken(payloadDto);
-        const foundToken: [GetTokenDto] = await this.foundToken(payloadDto.userId);
+        const foundToken: [GetTokenDto] = await this.foundToken(payloadDto.sub);
        foundToken?.map(async (token) =>{
         await this.deleteToken(token.id);
         })
-        const tokens = await this.savedTokens({userId:payloadDto.userId ,token: token ,refreshToken: refreshToken});
+        const tokens = await this.savedTokens({userId:payloadDto.sub ,token: token ,refreshToken: refreshToken});
         return tokens;
      }catch(e){
         throw e;
@@ -74,7 +74,7 @@ export class TokenService {
        try{
         const decoded: PayloadDto = await this.validateRefreshToken(refreshTokenDto.refreshToken);
         if(!decoded) throw new InternalServerErrorException('Dont Decoded Token');
-        const newTokens: ResultTokenDto =  await this.generateToken({userId: decoded.userId,userRole: decoded.userRole})
+        const newTokens: ResultTokenDto =  await this.generateToken({sub: decoded.sub,userRole: decoded.userRole})
         if(!newTokens) throw new InternalServerErrorException('An Error Occurred During Token Generation');
         return newTokens;
        }catch(e){
